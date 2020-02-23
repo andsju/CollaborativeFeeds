@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Login</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <h1>Login</h1>
+
+    <form id="form_login">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="container">
+            <p>
+                <label for="email">Email</label><br />
+                <input type="text" name="email" id="email" class="user-input" />
+            </p>
+            <p>
+                <label for="password">Password</label><br />
+                <input type="password" name="password" id="password" class="user-input" />
+            </p>
+            <button id="btnLogin">Login</button>
+            <span id="reply_login" class="reply"></span>
+        </div>
+    </form>
+
+    <div id="message"></div>
+
+    <% include ../partials/footer %>
+
+
+    <script>
+
+        $(document).ready(function() {
+    0
+            var socket = io();
+
+            $("#form_register").validate({
+                rules: {
+                    email: {
+                        required: true,
+                        email: true
+                    }
+                },
+                messages: {
+                    email: {
+                        required: "*Check email"
+                    }
+                }
+            });
+
+            socket.on("login", function (data) {
+                $("#message").append(data.message);
+            });
+
+            var btnAjaxLogin = document.querySelector("#btnLogin");
+            btnAjaxLogin.addEventListener("click", function(event) {
+                event.preventDefault();
+
+                if ($("#form_login").valid()) {
+                    $("#reply_login").removeClass().empty();
+                    var _csrf = $("[name='_csrf']").val();
+                    var email = $("#email").val();
+                    var password = $("#password").val();
+                    $.ajax({
+                        type: "POST",
+                        url: "/user/ajax/",
+                        data: {
+                            action: "ajax_login", email: email, password: password, _csrf: _csrf
+                        },
+                        success: function(data) {
+
+                            var obj = data;
+                            if (obj.success) {
+                                socket.emit("new login", {email: email});
+                                $("#reply_login").text("Login success - redirecting");
+                                $("#reply_login").removeClass().addClass("success");
+                                document.location.href = "/";
+                            } else {
+                                $("#reply_login").text(obj.message);
+                                $("#reply_login").removeClass().addClass("error");
+                            }
+                        },
+                        error: function(data) {
+                            console.log("error", error);
+                        }
+                    });
+                }
+
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>

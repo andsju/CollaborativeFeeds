@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Collaborate</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <h1>Collaborate</h1>
+
+    <% if (user.role == "administrator") { %>
+
+        <% if (user.channel.length > 0) {%>
+        <p>
+            Administrators can have one active channel/session. In order to create a new channel you need to <a href="#">close active channel</a>
+        </p>
+        <p>
+            Active channel: <span class="channel"><%= user.channel %></span>
+        </p>
+        <% } else { %>
+
+        <p>
+            Choose collaboration mode
+        </p>
+
+        <ul id="collaborate-mode">
+            <li><button class="mode" data-mode="admin">Admin mode - create channel</button></li>
+            <li><button class="mode" data-mode="participant" disabled>Participant mode</button></li>
+            <li><button class="mode" data-mode="spectator" disabled>Spectator mode</button></li>
+        </ul>
+
+        <% } %>
+        <span id="channel"></span>
+        <div id="channel-info" class="hidden">
+           <p>
+               Logged in users can now join channel, just ask them to visit: /collaborate/channel/<%= user.channel %>
+           </p>
+            <p>
+                As administrator you can choose to announce logged in users - press button below.
+            </p>
+            <p>
+                <button id="btnAnnounce" data-channel="">Announce</button>
+            </p>
+            <p>
+                In a <a href="/">view</a> you can request to collaborate.
+            </p>
+        </div>
+
+    <% }%>
+
+    <% include ../partials/footer %>
+
+    <script>
+
+        $(document).ready(function() {
+
+            var socket = io();
+
+            socket.on("channel", function (data) {
+
+                $("#message").append(data.message);
+
+                var $div = $("<div>", {id: data.channel, class: "announce"});
+                $div.click(function(){
+                    console.log(this.id);
+                    location.href = "/collaborate/channel/" + this.id;
+                });
+                $("body").append($div);
+                $div.text(data.message);
+
+            });
+
+            $(".mode").click(function() {
+
+                var _csrf = $("[name='_csrf']").val();
+                var mode = $(this).data("mode");
+                $("#collaborate-mode").hide();
+
+                if (mode == "admin") {
+                    $.ajax({
+                        type: "POST",
+                        url: "/collaborate/",
+                        data: {
+                            action: "get_channel", _csrf: _csrf
+                        },
+                        success: function(data) {
+                            var obj = JSON.parse(data);
+                            if (obj.success) {
+                                $("#channel").text("New channel created: "+ obj.channel);
+                                $("#btnAnnounce").attr("data-channel", obj.channel);
+                                $("#channel-info").show();
+                            }
+                        }
+                    });
+                }
+            });
+
+            <% if (user.channel.length > 0) {%>
+            $("#btnAnnounce").attr("data-channel", "<%= user.channel %>");
+            $("#channel-info").show();
+            <% } %>
+
+            $("#btnAnnounce").click(function() {
+                var channel = $(this).data("channel");
+                socket.emit("new channel", {channel: channel});
+            });
+
+        });
+
+    </script>
+
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+</body>
+
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Users</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <h1>Users</h1>
+
+
+    <% if (form !== true) { %>
+
+    <ul class="users">
+
+        <% if (users.length > 0) { %>
+
+        <% users.forEach(function(user) { %>
+
+        <li><%= user.email %><div class="right"><a href="/users/<%= user.user_id %>">edit</a></div><div class="right space"><%= user.role %></div></li>
+
+        <% }) %>
+        <% }%>
+
+    </ul>
+
+    <% } else { %>
+
+        <form action="/users/<%=users[0].user_id%>" method="post">
+
+            Edit role:
+            <i><%= users[0].email %></i>
+
+
+            <p>
+                <select name="role" id="role">
+
+                    <option value="user" <% if (users[0].role == "user") { %> selected<% }%>>user</option>
+                    <option value="administrator" <% if (users[0].role == "administrator") { %> selected<% }%>>administrator</option>
+
+                </select>
+
+            </p>
+            <p>
+                <button type="submit" id="btnSave">Save</button>
+                <% if (flash) {%>
+                <span class="success"><%= flash%></span>
+                <% }%>
+            </p>
+
+            <input type="hidden" name="_csrf" id="_csrf" value="<%= csrfToken%>" />
+        </form>
+
+
+    <% } %>
+
+    <% include ../partials/footer %>
+
+
+</body>
+
+</html>

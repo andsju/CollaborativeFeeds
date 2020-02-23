@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Edit view</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+
+    <div>
+        <h2 class="lead">Connect feeds to view:</h2>
+        <a href="/view/show/<%= viewCurrent[0].feed_view_id; %>" class="right info">Show view</a>
+    </div>
+    <h1><%= viewCurrent[0].title; %></h1>
+
+    <input type="hidden" value="<%= viewCurrent[0].feed_view_id; %>" id="feed_view_id"/>
+
+    <div id="rssfeeds">
+
+        <% for (var i = 0; i < feeds.length; i += 1) {%>
+        <%  var skip = false;%>
+        <div class="feeds" data-id="<%= feeds[i].feed_id; %>" data-link="<%= feeds[i].link; %>" data-cat="<%= feeds[i].category; %>">
+            <div class="right">
+
+                <% for (var j = 0; j < vievMembers.length; j += 1) {%>
+
+                    <% if (vievMembers[j].feed_id === feeds[i].feed_id) { %>
+                        <button class="edit" data-id="<%= feeds[i].feed_id; %>" data-do="remove">Remove</button>
+                <%  skip = true;%>
+                <% break;}%>
+
+                <% }%>
+                <% if (skip === false) {%>
+                <button class="edit" data-id="<%= feeds[i].feed_id; %>" data-do="add">Add</button>
+                <% }%>
+
+            </div>
+            <h4>
+                <%= feeds[i].title; %>
+            </h4>
+            <div>
+                <a href="<%= feeds[i].link; %>" target="_blank"><%= feeds[i].link; %></a>
+            </div>
+
+        </div>
+        <% } %>
+    </div>
+
+    <input type="hidden" value="" id="ids" data-page="0">
+
+    <% include ../partials/footer %>
+
+    <script>
+
+        $(document).ready(function() {
+
+            $(".edit").click(function() {
+
+                var button = $(this);
+                var id = $(this).data("id");
+                var todo = $(this).data("do");
+                var _csrf = $("[name='_csrf']").val();
+                var feedViewId = $("#feed_view_id").val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/view_ajax/",
+                    dataType: "json",
+                    data: {
+                        action: "ajax_view_edit", id: id, feedViewId: feedViewId, todo: todo, _csrf: _csrf
+                    },
+                    success: function(data) {
+                        var obj = data;
+                        if (obj.success === true) {
+                            button.hide();
+                        } else {
+                            console.log(data.message);
+                            button.append(data.message);
+                        }
+                    }
+                });
+            });
+
+        });
+
+    </script>
+
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+</body>
+
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Create view</title>
+</head>
+
+<body>
+
+<% include ../partials/navigation %>
+<% include ../partials/site %>
+<%- include('../partials/online', {user: user}) %>
+
+<h1>Create view</h1>
+A view can contain one or more RSS feeds. RSS feeds must be registered in this application. Set a title and save!
+
+<form id="form-view-save">
+    <div class="form-group">
+        <label for="title">Set view title</label><br />
+        <input type="text" name="title" id="title" class="user-input" />
+    </div>
+    <div class="form-group">
+        <button id="btnSave">Save</button>
+        <span id="reply-save" class="reply"></span>
+    </div>
+</form>
+<div class="reply show-view hidden">
+    <a href="/login">Login</a>
+</div>
+
+
+<% include ../partials/footer %>
+
+
+<script>
+
+    $(document).ready(function() {
+        var iconSuccess = "<i class='fa fa-check' aria-hidden='true'></i>&nbsp;";
+        var iconError = "<i class='fa fa-exclamation' aria-hidden='true'></i>&nbsp;";
+
+        $("#form-view-save").validate({
+            rules: {
+                title: {
+                    required: true,
+                    maxlength: 100,
+                    minlength: 2
+                }
+            },
+            messages: {
+                title: {
+                    required: "* Check title, enter 2-100 characters"
+                }
+            }
+        });
+
+        var btnAjaxSave = document.querySelector("#btnSave");
+        btnAjaxSave.addEventListener("click", function(event) {
+            event.preventDefault();
+
+            if ($("#form-view-save").valid()) {
+                var title = $("#title").val();
+                var _csrf = $("[name='_csrf']").val();
+                var form = $("#form-view-save");
+
+                $.ajax({
+                    type: "POST",
+                    url: "/view_ajax/",
+                    data: {
+                        action: "view_save", title: title, _csrf: _csrf
+                    },
+                    success: function(data) {
+
+                        var obj = JSON.parse(data);
+                        if (obj.success) {
+                            form.find("input, select, textarea, button, label").hide();
+                            $("#reply-save").html("saved");
+                            $("#reply-save").removeClass().addClass("success");
+                            $("#reply-save").prepend(iconSuccess);
+                            $(".show-view").html("Edit view &raquo; <a href=/view/show/" + obj.viewId + ">" + title + "</a>");
+                            $(".show-view").show();
+                        } else {
+                            $("#reply-save").text("View not saved");
+                            $("#reply-save").addClass("error");
+                            $("#reply-save").prepend(iconError);
+                        }
+
+                    }
+                });
+            }
+
+        });
+    });
+
+</script>
+
+<input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+</body>
+
+</html>

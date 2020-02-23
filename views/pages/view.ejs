@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <% include ../partials/head %>
+        <title>Views</title>
+    </head>
+
+    <body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <div>
+        <h2 class="lead">Feed view:</h2>
+        <a href="/" class="right info">My views</a>
+    </div>
+
+    <h1><%= current[0].title; %></h1>
+
+    <% if (user.channel.length > 0 ) { %>
+    <p>
+        channel: <span class="channel"><%= user.channel %></span>
+    </p>
+    <% } %>
+
+    <div class="right">
+        <div>
+            <a href="#" class="info right toggle-form"><i class='fa fa-pencil' aria-hidden='true'></i> edit view</a>
+        </div>
+        <div>
+            <a href="/view/edit/<%= current[0].feed_view_id; %>" class="right info">RSS add | remove</a>
+        </div>
+    </div>
+
+    <form id="form-view-edit" class="hidden">
+        <input type="text" id="title" name="title" value="<%= current[0].title; %>" />
+        <div class="form-group">
+            <button id="btnSave">Save</button>
+            <button id="btnDelete">Delete</button>
+            <span id="reply_register" class="reply"></span>
+        </div>
+    </form>
+
+    RSS feeds in current view:
+
+    <ul id="feed-links">
+        <% for (var i = 0; i < views.length; i += 1) {%>
+
+        <li data-id="<%= views[i].feed_id; %>" data-link="<%= views[i].link; %>"><%= views[i].title; %></li>
+
+        <% } %>
+    </ul>
+
+
+    <div id="history"></div>
+
+    <input type="hidden" value="<%= ids; %>" id="ids" data-page="0">
+
+    <div id="search-container" title="Search" class="hidden">
+        <input type="text" id="search-words" class="size75" /> <i>(result limit: 100)</i><br />
+        <button type="submit" id="btnSearch">Search</button>
+        <img src="/css/images/spinner.gif" class="spinner hidden" />
+        <div id="search-result"></div>
+    </div>
+    <div id="collaboration-container" title="New collaboration" style="display:none;">
+
+        <button type="submit" id="btnRequestToCollaborate" data-channel="<%= user.channel %>">Request to collaborate</button>
+        <button type="submit" id="btnShowCollaborateResult" data-channel="<%= user.channel %>" data-id="" class="hidden">Show response</button>
+        <button type="submit" id="btnEmitCollaborateResult" disabled>Show response to all participants</button>
+        <button id="btnAnnounce" data-channel="<%= user.channel %>" class="right">Announce</button>
+
+        <div id="new_collaboration"></div>
+        <p>
+            <label for="instruction">Instruction</label><br />
+            <textarea name="instruction" id="instruction"></textarea>
+        </p>
+        <p>
+            <label for="time">Time to respond</label><br />
+            <input type="text" name="time" id="time" value="120" />
+        </p>
+        <p>
+            <label for="time">Set desired response format</label><br />
+            <select name="format" id="format" disabled>
+                <option value="text">Plain text</option>
+                <option value="code">Coded text * (parsed content)</option>
+                <option value="lopsedel">Löpsedel * (max words / rows)</option>
+            </select>
+        </p>
+
+
+    </div>
+
+    <% include ../partials/footer %>
+
+    <script>
+
+        $(document).ready(function() {
+
+            var socket = io();
+
+            var iconSuccess = "<i class='fa fa-check' aria-hidden='true'></i>&nbsp;";
+            var iconError = "<i class='fa fa-exclamation' aria-hidden='true'></i>&nbsp;";
+
+            $("#btnRequestToCollaborate").show();
+            $("#btnShowCollaborateResult").hide();
+
+            $(".toggle-form").click(function() {
+                $("body").find("form").toggle();
+            });
+
+            $("#btnSave").click(function(event) {
+                event.preventDefault();
+                $("#form-view-edit").validate({
+                    rules: {
+                        title: {
+                            required: true
+                        }
+                    },
+                    messages: {
+                        title: {
+                            required: "* Check title"
+                        }
+                    }
+                });
+
+                if ($("#form-view-edit").valid()) {
+                    var title = $("#title").val();
+                    var _csrf = $("[name='_csrf']").val();
+                    var form = $("#form-view-edit");
+                    var viewId = $("#viewId").val();
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/view_ajax/",
+                        data: {
+                            action: "view_edit", title: title, viewId: viewId, _csrf: _csrf
+                        },
+                        success: function(data) {
+                            var obj = JSON.parse(data);
+                            if (obj.success) {
+                                location.reload();
+                            } else {
+                                $("#reply-save").text("View not saved");
+                                $("#reply-save").addClass("error");
+                            }
+                        }
+                    });
+                }
+            });
+
+            $("#btnDelete").click(function(event) {
+                event.preventDefault();
+                if ($("#form-view-edit").valid()) {
+                    var _csrf = $("[name='_csrf']").val();
+                    var viewId = $("#viewId").val();
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/view_ajax/",
+                        data: {
+                            action: "view_delete", viewId: viewId, _csrf: _csrf
+                        },
+                        success: function(data) {
+                            var obj = JSON.parse(data);
+                            if (obj.success) {
+                                window.location.href = "/";
+                            }
+                        }
+                    });
+                }
+            });
+
+            var ids = $("#ids").val();
+            var _csrf = $("[name='_csrf']").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/view_ajax/",
+                data: {
+                    action: "view_link", ids: ids, _csrf: _csrf
+                },
+                success: function(data) {
+                    var obj = data;
+                    var tempTitle = tempDate = "";
+                    for (var i = 0; i < obj.length; i += 1) {
+                        if (tempTitle != obj[i].title || tempDate != obj[i].datepub) {
+
+                            var channel;
+                            var appendElement = "#history";
+                            var markWords = true;
+                            <% if (user.channel.length > 0) { %>
+                            channel = "<%= user.channel %>";
+                            <% } else { %>
+                            channel = "";
+                            <% }  %>
+
+                            <% if (user.role == "administrator") { %>
+                            showAdministratorOptions(obj[i], appendElement, channel, markWords);
+                            <% } else { %>
+                            showUserOptions(obj[i], appendElement, channel, markWords)
+                            <% } %>
+
+                            tempTitle = obj[i].title;
+                            tempDate = obj[i].datepub;
+                        } else {
+                            $("#history").append("<p>" + obj[i].datepub  + " | " + obj[i].titleRSS + "</p>");
+                        }
+                    }
+
+                    $("#ids").attr("page", 20);
+                }
+            });
+
+            $(window).scroll(function() {
+                console.log("Scroll... ");
+                console.log($(window).scrollTop());
+                console.log($(document).height());
+                console.log($(window).height());
+                if($(window).scrollTop() >= $(document).height() - $(window).height()) {
+                    console.log("Scolled to bottom...");
+                    // paging results
+                    var page = parseInt($("#ids").attr("page"));
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/view_ajax/",
+                        data: {
+                            action: "view_link", ids: ids, page: page, _csrf: _csrf
+                        },
+                        success: function(data) {
+                            var obj = data;
+                            var tempTitle = tempDate = "";
+                            for (var i = 0; i < obj.length; i += 1) {
+                                if (tempTitle != obj[i].title || tempDate != obj[i].datepub) {
+                                    var channel;
+                                    var appendElement = "#history";
+                                    var markWords = true;
+                                    <% if (user.channel.length > 0) { %>
+                                    channel = "<%= user.channel %>";
+                                    <% } else { %>
+                                    channel = "";
+                                    <% }  %>
+
+                                    <% if (user.role == "administrator") { %>
+                                    showAdministratorOptions(obj[i], appendElement, channel, markWords);
+                                    <% } else { %>
+                                    showUserOptions(obj[i], appendElement, channel, markWords)
+                                    <% } %>
+
+                                    tempTitle = obj[i].title;
+                                    tempDate = obj[i].datepub;
+                                } else {
+                                    $("#history").append("<p>" + obj[i].datepub  + " | " + obj[i].titleRSS + "</p>");
+                                }
+                            }
+                            $("#ids").attr("page", page + 20);
+                        }
+                    });
+                }
+            });
+
+            $("body").on("click", "button.rss", function() {
+
+                var title = $(this).parent().find(".title").text().trim();
+                var arrWords = title.split(" ");
+                var newTitle = "";
+                var i;
+                for (i = 0; i < arrWords.length; i += 1) {
+                    newTitle += "<span class='words'>" + arrWords[i] + "</span> ";
+                }
+
+                $(this).parent().find(".title").html(newTitle);
+
+                var description = $(this).parent().find("div.description").text().trim();
+                var arrWords = description.split(" ");
+                var newDescription = "";
+                for (i = 0; i < arrWords.length; i += 1) {
+                    newDescription += "<span class='words'>" + arrWords[i] + "</span> ";
+                }
+
+                $(this).parent().find("div.description").html(newDescription);
+                $("<button class='btnSearchWords'>Search</button>").insertAfter($(this));
+                $(this).remove();
+            });
+
+            $("body").on("click", "span.words", function() {
+                $(this).toggleClass("mark");
+
+            });
+
+            $("body").on("click", "button#btnShowCollaborateResult", function() {
+                var channel = $(this).attr("data-channel") || "";
+                var id = $(this).attr("data-id") || 0;
+                console.log("window.location.host", window.location.host);
+                console.log("window.location.hostname", window.location.hostname);
+                console.log("window.location.origin", window.location.origin);
+                window.open(window.location.origin + "/collaborate/channel/" + channel + "/" + id + "/response","_blank");
+            });
+
+            $("body").on("click", "button#btnRequestToCollaborate", function() {
+
+                var channel = $(this).attr("data-channel") || "";
+                var title = $(this).parent().find(".title").text();
+                var description = $(this).parent().find(".description").text();
+                var meta = $(this).parent().find(".meta").text();
+                var image = $(this).parent().find("img").attr("src");
+                var instruction = $(this).parent().find("#instruction").val();
+                var time = $(this).parent().find("#time").val();
+                var format = $(this).parent().find("#format").val();
+                var _csrf = $("[name='_csrf']").val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/view_ajax/",
+                    data: {
+                        action: "view_collaborate", channel: channel, title: title, description: description, meta: meta, image: image, instruction: instruction, time: time, format: format, _csrf: _csrf
+                    },
+                    success: function(data) {
+                        var obj = JSON.parse(data);
+                        if (obj.success) {
+                            var id = obj.feedCollaborateChannelId || 0;
+                            socket.emit("new task", {rss: {title: title, description: description, meta: meta, image: image, instruction: instruction, time: time, format: format, id: id, channel: channel} });
+                            $("#btnRequestToCollaborate").hide();
+                            $("#btnShowCollaborateResult").show();
+                        }
+                    }
+                });
+            });
+
+            $("body").on("click", "button#btnEmitCollaborateResult", function() {
+                socket.emit("new response", {rss: {title: "todo", sonar: "yes"} });
+            });
+
+
+
+            $("body").on("click", "button.btnSearchWords", function() {
+                $("#search-result").empty();
+                $("#search-container").show();
+                var words = document.querySelectorAll(".mark");
+                var arrayWords = [];
+                for (var i = 0; i < words.length; i +=1) {
+                    arrayWords.push(words[i].textContent);
+                }
+
+                if (arrayWords.length > 0) {
+
+                    $("#search-words").val(arrayWords.join(" "));
+                    $(".spinner").show();
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/view_ajax/",
+                        data: {
+                            action: "view_searchwords", ids: ids, words: arrayWords, _csrf: _csrf
+                        },
+                        success: function(data) {
+                            $(".spinner").hide();
+                            var obj = data;
+                            var searchContainer = $("#search-container");
+                            var searchResult = $("#search-result");
+                            var searchWords = $("#search-words");
+                            $.colorbox({width:"90%",height:"90%", inline:true, href: searchContainer});
+                            searchContainer.show();
+                            for (var i = 0; i < obj.length; i += 1) {
+
+                                var channel;
+                                var appendElement = "#search-result";
+                                var markWords = false;
+                                <% if (user.channel.length > 0) { %>
+                                channel = "<%= user.channel %>";
+                                <% } else { %>
+                                channel = "";
+                                <% }  %>
+
+                                <% if (user.role == "administrator") { %>
+                                showAdministratorOptions(obj[i], appendElement, channel, markWords);
+                                <% } else { %>
+                                showUserOptions(obj[i], appendElement, channel, markWords)
+                                <% } %>
+
+
+
+                                <% if (user.role == "administrator") { %>
+                                //searchResult.append("<div class='post'><hr /><button class='collaborate_new'><i class='fa fa-plus-square-o' aria-hidden='true'></i>&nbsp;New collabotation</button><h4 class='title'>" + obj[i].title + "</h4><div class='description'>" + obj[i].description + "</div><div class='meta'>" + obj[i].datepub + " | " + obj[i].titleRSS + "</div></div>");
+                                <% } %>
+                            }
+                        }
+                    });
+                }
+            });
+
+            $("body").on("click", "#btnSearch", function() {
+                $("#search-result").empty();
+                var words = $("#search-words").val();
+                words = words.trim();
+
+                if (words.length > 0) {
+                    words = words.replace(/\s\s+/g, " ");
+                    var arrayWords = words.split(" ");
+                    $(".spinner").show();
+                    $.ajax({
+                        type: "POST",
+                        url: "/view_ajax/",
+                        data: {
+                            action: "view_searchwords", ids: ids, words: arrayWords, _csrf: _csrf
+                        },
+                        success: function (data) {
+                            $(".spinner").hide();
+                            var obj = data;
+                            var searchContainer = $("#search-container");
+                            var searchResult = $("#search-result");
+                            var searchWords = $("#search-words");
+                            searchResult.empty();
+                            for (var i = 0; i < obj.length; i += 1) {
+
+                                var channel;
+                                var appendElement = "#search-result";
+                                var markWords = false;
+                                <% if (user.channel.length > 0) { %>
+                                channel = "<%= user.channel %>";
+                                <% } else { %>
+                                channel = "";
+                                <% }  %>
+
+                                <% if (user.role == "administrator") { %>
+                                showAdministratorOptions(obj[i], appendElement, channel, markWords);
+                                <% } else { %>
+                                showUserOptions(obj[i], appendElement, channel, markWords)
+                                <% } %>
+
+
+                                //searchResult.append("<div class='post'><hr /><button class='collaborate_new'><i class='fa fa-plus-square-o' aria-hidden='true'></i>&nbsp;New collabotation</button><h4>" + obj[i].title + "</h4><p>" + obj[i].description + "</p><p>" + obj[i].datepub + "</p></div>");
+                            }
+                        }
+                    });
+                }
+            });
+
+            $("body").on("click", "button.collaborate_new", function() {
+
+                var title = $(this).parent().find(".title").text();
+                var description = $(this).parent().find(".description").text();
+                var meta = $(this).parent().find(".meta").text();
+                var image = $(this).parent().find("img").attr("src");
+                var id = $(this).data("id");
+                var collaborationContainer = $("#collaboration-container");
+                $.colorbox({width:"90%",height:"90%", inline:true, href: collaborationContainer});
+
+                $("#btnRequestToCollaborate").show();
+                collaborationContainer.find(".post").empty();
+                collaborationContainer.show();
+
+                var divElement = document.createElement("div");
+                divElement.classList.add("post");
+                divElement.setAttribute("data-id", id);
+
+                $("#btnShowCollaborateResult").attr("data-id", id);
+
+                var titleElement = document.createElement("h4");
+                titleElement.classList.add("title");
+                titleElement.textContent = title;
+                divElement.appendChild(titleElement);
+
+                if (image !== undefined) {
+                    var imageElement = document.createElement("img");
+                    imageElement.classList.add("meta");
+                    imageElement.src = image;
+                    divElement.appendChild(imageElement);
+                }
+                var descriptionElement = document.createElement("div");
+                descriptionElement.classList.add("description");
+                descriptionElement.textContent = description;
+                divElement.appendChild(descriptionElement);
+
+                var metaElement = document.createElement("div");
+                metaElement.classList.add("meta");
+                metaElement.textContent = meta;
+                divElement.appendChild(metaElement);
+
+                collaborationContainer.append(divElement);
+            });
+
+            $("#btnAnnounce").click(function() {
+                var channel = $(this).data("channel");
+                socket.emit("new channel", {channel: channel});
+            });
+
+
+            function showUserOptions(obj, appendElement, channel, markWords) {
+                markWords = markWords === true ? "<button class='rss'><i class='fa fa-globe' aria-hidden='true'></i>&nbsp; Mark words</button>" : "";
+                obj.description = obj.description === null ? "" : obj.description;
+                $(appendElement).append("<div class='post'><hr />" + markWords + "<h4 class='title'>" + obj.title + "</h4><div class='description'>" + obj.description + "</div><div class='meta'>" + obj.datepub + " | " + obj.titleRSS + "</div></div>");
+            }
+            function showAdministratorOptions(obj, appendElement, channel, markWords) {
+                if (channel.length > 0) {
+                    markWords = markWords === true ? "<button class='rss'><i class='fa fa-globe' aria-hidden='true'></i>&nbsp; Mark words</button>" : "";
+                    obj.description = obj.description === null ? "" : obj.description;
+                    $(appendElement).append("<div class='post'><hr />" + markWords + "<button class='collaborate_new' data-id="+ obj.feed_history_id +"><i class='fa fa-plus-square-o' aria-hidden='true'></i>&nbsp;New collabotation</button><h4 class='title'>" + obj.title + "</h4><div class='description'>" + obj.description + "</div><div class='meta'>" + obj.datepub + " | " + obj.titleRSS + "</div></div>");
+                } else {
+                    showUserOptions(obj, appendElement, channel, markWords);
+                }
+            }
+        });
+
+    </script>
+
+    <input type="hidden" id="viewId" value="<%= current[0].feed_view_id; %>" />
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+</body>
+
+</html>

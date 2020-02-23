@@ -1,0 +1,22 @@
+<% if (user) { %>
+<div class="wrapper online">
+    <div class="left">
+
+        <ul id="menu">
+            <li><a href="/" class="online"><i class="fa fa-home" aria-hidden="true"></i>&nbsp;Start</a></li>
+            <li><a href="/user" class="online"><span id="usernameOnline"><i class="fa fa-user" aria-hidden="true"></i>&nbsp;<%= user.email %></span></a></li>
+            <li><a href="/feed" class="online"><i class="fa fa-rss" aria-hidden="true"></i>&nbsp;Feeds</a></li>
+            <li><a href="/" class="online">Views</a></li>
+            <li><a href="/createview" class="online">Add view</a></li>
+
+            <li><a href="/collaborate" class="online"><i class='fa fa-comments-o' aria-hidden='true'></i>&nbsp;Collaborate</a></li>
+            <li><a href="/users" class="online">Users</a></li>
+
+        </ul>
+
+    </div>
+    <div class="right">
+        <a href="/user/logout" class="online">Logout</a>
+    </div>
+</div>
+<% } %>

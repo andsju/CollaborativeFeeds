@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <% include ../partials/head %>
+        <title>Collaborate</title>
+    </head>
+
+    <body>
+
+        <% include ../partials/navigation %>
+        <% include ../partials/site %>
+        <%- include('../partials/online', {user: user}) %>
+
+        <h1>Collaboration channel <span class="channel"><%= channel %></span> <i class='fa fa-comments-o' aria-hidden='true'></i></h1>
+
+
+        <p>
+            Please respond to tasks seen below. Might take some time....
+        </p>
+
+
+        <div id="collaborations"></div>
+
+        <div id="timer">&nbsp;</div>
+
+        <% include ../partials/footer %>
+
+        <script>
+
+            $(document).ready(function() {
+
+                var socket = io();
+
+                socket.on("response", function (data) {
+                    var keys = Object.keys(data);
+                    for(var key in keys){
+                        //console.log(key);
+                    }
+                    $("#collaborations").text(data.rss.title);
+                });
+
+                var interval = null;
+                socket.on("task", function (data) {
+
+                    $("#collaborations").empty();
+                    $("#timer").text(data.rss.time);
+                    clearInterval(interval);
+
+                    var countdown = data.rss.time;
+
+                    if (interval) {
+                        clearInterval(interval);
+                    }
+                    interval = setInterval(function() {
+                        $("#timer").text(--countdown + " seconds left");
+
+                        if (countdown <= 0) {
+                            $("#timer").text("Response time...");
+                            $("#btnRespond").text("Respond...countdown done");
+                            $("#btnRespond").attr("disabled", "disabled");
+                            clearInterval(interval);
+                        }
+                    }, 1000);
+
+                    var divElement = document.createElement("div");
+                    divElement.classList.add("post");
+
+                    var divAnotherElement = document.createElement("div");
+                    divAnotherElement.classList.add("instruction");
+
+                    var instructionElement = document.createElement("b");
+                    instructionElement.classList.add("instruction");
+                    instructionElement.textContent = "Instruction";
+                    divAnotherElement.appendChild(instructionElement);
+
+                    instructionElement = document.createElement("div");
+                    instructionElement.textContent = data.rss.instruction;
+                    divAnotherElement.appendChild(instructionElement);
+
+                    divElement.appendChild(divAnotherElement);
+
+                    var titleElement = document.createElement("h4");
+                    titleElement.classList.add("title");
+                    titleElement.textContent = data.rss.title;
+                    divElement.appendChild(titleElement);
+
+                    if (data.rss.image !== undefined) {
+                        var imageElement = document.createElement("img");
+                        imageElement.classList.add("meta");
+                        imageElement.src = data.rss.image;
+                        divElement.appendChild(imageElement);
+                    }
+
+                    var descriptionElement = document.createElement("div");
+                    descriptionElement.classList.add("description");
+                    descriptionElement.textContent = data.rss.description;
+                    divElement.appendChild(descriptionElement);
+
+                    var metaElement = document.createElement("div");
+                    metaElement.classList.add("meta");
+                    metaElement.textContent = data.rss.meta;
+                    divElement.appendChild(metaElement);
+
+                    var formatElement = document.createElement("span");
+                    formatElement.classList.add("format");
+                    formatElement.textContent = data.rss.format;
+                    //divElement.appendChild(formatElement);
+
+                    var hrElement = document.createElement("hr");
+                    divElement.appendChild(hrElement);
+
+                    var formElement = document.createElement("form");
+                    formElement.setAttribute("method", "POST");
+                    formElement.setAttribute("action", "/collaborate/channel/<%= channel %>");
+
+                    var textareaResponse = document.createElement("textarea");
+                    textareaResponse.name = "response";
+                    textareaResponse.id = "response";
+                    textareaResponse.setAttribute("placeholder", "Your response...");
+                    formElement.appendChild(textareaResponse);
+
+                    var inputElement = document.createElement("input");
+                    inputElement.setAttribute("type", "hidden");
+                    inputElement.name = "channelId";
+                    inputElement.id = "channelId";
+                    inputElement.value = data.rss.id;
+                    formElement.appendChild(inputElement);
+
+                    inputElement = document.createElement("input");
+                    inputElement.setAttribute("type", "hidden");
+                    inputElement.name = "userId";
+                    inputElement.id = "userId";
+                    inputElement.value = "<%= user.id %>";
+                    formElement.appendChild(inputElement);
+
+                    var button = document.createElement("button");
+                    button.setAttribute("type", "submit");
+                    button.id = "btnRespond";
+                    var buttonText = document.createTextNode("Respond");
+                    button.appendChild(buttonText);
+                    button.addEventListener("click", function(event) {
+                        //event.preventDefault();
+                        var response = $(this).parent().find("textarea").val();
+                        var channelId = $("#channelId").val();
+                        var userId = $("#userId").val();
+                    });
+
+                    formElement.appendChild(button);
+
+                    var hiddenElement = document.createElement("input");
+                    hiddenElement.setAttribute("name", "_csrf");
+                    hiddenElement.setAttribute("type", "hidden");
+                    hiddenElement.value = "<%= csrfToken %>";
+                    formElement.appendChild(hiddenElement);
+
+                    divElement.appendChild(formElement);
+
+                    $("#collaborations").append(divElement);
+                });
+
+            });
+
+        </script>
+
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    </body>
+
+</html>

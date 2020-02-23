@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>RSS streams - aloha</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <h1>RSS streams</h1>
+    <a name="edit"><form name="form_rss" id="form_rss"></a>
+        <input type="hidden" id="feed_id" value="0">
+        <div class="container">
+            <p>
+                <label for="link">Add new link</label><br />
+                <input type="text" name="link" id="link" class="size75" />
+            </p>
+            <button id="btnCheck">Check</button>
+            <% if (user.role === "user") { %>
+            <i class="fa fa-user" aria-hidden="true"></i>&nbsp "user" kan inte editera RSS strömmar
+            <% }%>
+
+            <img src="css/images/spinner.gif" class="spinner hidden" />
+            <span id="replyCheck" class="reply"></span>
+
+            <div id="required" class="hidden">
+                <p>
+                    <label for="title">Title</label><br />
+                    <input type="text" name="title" id="title" class="size75" />
+                </p>
+                <p>
+                    <label for="description">Description</label><br />
+                    <textarea name="description" id="description"></textarea>
+                </p>
+                <p class="hidden">
+                    <input type="text" id="language" title="Language">
+                    <input type="text" id="image_url" title="Image url">
+                    <input type="text" id="image_title" title="Image title">
+                </p>
+
+
+                <button id="btnSave">Save</button><button id="btnDelete">Delete</button>
+                <span id="reply_save" class="reply"></span>
+            </div>
+
+        </div>
+
+    </form>
+
+    <hr />
+    <div>
+        <label for="filter">Filter result</label>
+        <input type="text" name="filter" id="filter">
+    </div>
+    <div id="rssfeeds">
+    <% for (var i = 0; i < feeds.length; i += 1) {%>
+        <div class="feeds" data-id="<%= feeds[i].feed_id; %>" data-link="<%= feeds[i].link; %>" data-cat="<%= feeds[i].category; %>" data-searchable="<%= feeds[i].title; %> <%= feeds[i].description; %> <%= feeds[i].link; %>">
+            <div class="right">
+                <a href="#edit"><button class="edit" data-id="<%= feeds[i].feed_id; %>" data-title="<%= feeds[i].title; %>" data-link="<%= feeds[i].link; %>" data-description="<%= feeds[i].description; %>"  data-language="<%= feeds[i].language; %>" data-image_url="<%= feeds[i].image_url; %>" data-image_title="<%= feeds[i].image_title; %>"><span class="edit ui-icon ui-icon-pencil" style="display:inline-block;"></span></button></a>
+            </div>
+            <h4 class="feed-title">
+                <%= feeds[i].title; %>
+            </h4>
+            <div>
+                <%= feeds[i].description; %><br />
+                <a href="<%= feeds[i].link; %>" target="_blank"><%= feeds[i].link; %></a>
+            </div>
+        </div>
+    <% } %>
+    </div>
+
+    <input type="hidden" value="" id="ids" data-page="0">
+
+    <% include ../partials/footer %>
+
+    <script>
+
+        $(document).ready(function() {
+
+            $("#form_rss").validate({
+                rules: {
+                    link: {
+                        required: true,
+                        url: true
+                    }
+                },
+                messages: {
+                    link: {
+                        required: "* Check url"
+                    }
+                }
+            });
+
+            $(".edit").click(function() {
+
+                $("#replyCheck").text("");
+                $("#required").show();
+                var id = $(this).data("id");
+                var title = $(this).data("title");
+                var link = $(this).data("link");
+                var description = $(this).data("description");
+                var language = $(this).data("language");
+                var image_url = $(this).data("image_url");
+                var image_title = $(this).data("image_title");
+                $("#feed_id").val(id);
+                $("#title").val(title);
+                $("#description").val(description);
+                $("#language").val(language).attr("disabled", "disabled");
+                $("#image_url").val(image_url);
+                $("#image_title").val(image_title);
+                $("#link").val(link).attr("disabled", "disabled");
+                $("#target").focus();
+            });
+
+            $("#btnDelete").click(function(event) {
+                event.preventDefault();
+
+                var id = $("#feed_id").val();
+                var _csrf = $("[name='_csrf']").val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/feed/ajax/",
+                    data: {
+                        action: "delete", id: id, _csrf: _csrf
+                    },
+                    success: function(data) {
+                        var obj = data;
+                        if (obj.success === true) {
+                            $("#reply_save").text(obj.message);
+                            $("#reply_save").addClass("success");
+                            document.location.href = "/feed";
+                        } else {
+                            $("#reply_save").text(obj.message);
+                            $("#reply_save").addClass("error");
+                        }
+                        $("#reply_save").show();
+                    }
+                 });
+
+            });
+
+            var btnAjaxSave = document.querySelector("#btnSave");
+            btnAjaxSave.addEventListener("click", function(event) {
+                event.preventDefault();
+
+                if ($("#form_rss").valid()) {
+                    $("#reply_save").removeClass();
+                    var id = $("#feed_id").val();
+                    var title = $("#title").val();
+                    var link = $("#link").val();
+                    var category = $("#category").val();
+                    var description = $("#description").val();
+                    var language = $("#language").val();
+                    var image_url = $("#image_url").val();
+                    var image_title = $("#image_title").val();
+                    var _csrf = $("[name='_csrf']").val();
+                    $.ajax({
+                        type: "POST",
+                        url: "/feed/ajax/",
+                        data: {
+                            action: "save", 
+                            id: id, 
+                            title: title, 
+                            link: link, 
+                            category: category, 
+                            description: description, 
+                            language: language, 
+                            image_title: image_title, 
+                            image_url: image_url, 
+                            _csrf: _csrf
+                        },
+                        success: function(data) {
+
+                            var obj = data;
+                            if (obj.success == true) {
+                                $("#reply_save").text(obj.message);
+                                $("#reply_save").addClass("success");
+                                document.location.href = "/feed";
+                            } else {
+                                $("#reply_save").text(obj.message);
+                                $("#reply_save").addClass("error");
+                            }
+                            $("#reply_save").show();
+                        }
+                    });
+                }
+
+            });
+
+            var btnAjaxCheck = document.querySelector("#btnCheck");
+            btnAjaxCheck.addEventListener("click", function(event) {
+                event.preventDefault();
+
+                $("#reply_save").text("");
+                $("#reply_save").removeClass();
+
+                if ($("#form_rss").valid()) {
+                    $(".spinner").show();
+                    $("#replyCheck").text("");
+                    $("#required").hide();
+                    $("#replyCheck").removeClass();
+
+                    var link = $("#link").val();
+                    var _csrf = $("[name='_csrf']").val();
+
+                    $.ajax({
+                        method: "POST",
+                        url: "/feed/ajax_check/",
+                        data: {action: "ajax_check", link: link, _csrf: _csrf}
+                    })
+                    .done(function (data) {
+                        console.log("data", data);
+                        console.log("image", data.imageUrl);
+                        console.log("description", data.description);
+                        var cssClass = data.success === true ? "success" : "error";
+                        $("#replyCheck").addClass(cssClass);
+                        $("#replyCheck").text(data.message);
+                        $(".spinner").hide();
+                        
+                        if (data.success === true) {                            
+                            $("#title").val(data.title);
+                            $("#description").val(data.description);
+                            $("#language").val(data.language);
+                            $("#image_url").val(data.imageUrl);
+                            $("#image_title").val(data.imageTitle);
+                            $("#required").show();
+                            $('<img src="'+data.imageUrl+'">').insertAfter("#replyCheck");
+                        } else {
+                            $("#replyCheck").append("...check url");
+                        }
+                    });
+
+                }
+
+            });
+
+            $("#filter").keyup(function() {
+                var s = $(this).val();
+                console.log("s", s);
+                var channels = $("#rssfeeds").children();
+                //console.log(channels);
+
+                var feeds = document.getElementsByClassName("feeds");
+                //console.log(feeds);
+                var searchable;
+                for (var i = 0; i < feeds.length; i++) {
+                    searchable = feeds[i].getAttribute("data-searchable");
+                    console.log(s, searchable);
+                    if (searchable.indexOf(s) >= 0) {
+                        
+                        feeds[i].style.display = "block";
+                    } else {
+                        feeds[i].style.display = "none";
+                        console.log("hide:" + s + " not found in " + searchable);
+                    }
+                }
+            });
+
+        });
+
+    </script>
+
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <% include ../partials/head %>
+        <title>Register</title>
+    </head>
+
+    <body>
+
+        <% include ../partials/navigation %>
+        <% include ../partials/site %>
+        <%- include('../partials/online', {user: user}) %>
+
+        <h1>Register</h1>
+
+        <div class="container">
+            <form id="form-register" action="/template?form=form-template" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+                <div class="form-group">
+                    <label for="email">Email</label><br />
+                    <input type="text" name="email" id="email" class="user-input" />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label><br />
+                    <input type="password" name="password" id="password" class="user-input" />
+                </div>
+                <div class="form-group">
+                    <label for="password_confirm">Confirm password</label><br />
+                    <input type="password" name="password_confirm" id="password_confirm" class="user-input" />
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="agree" name="agree" />
+                    <label for="agree">I agree</label>
+                </div>
+                <div class="form-group">
+                    <button id="btnRegister">Register</button>
+                    <span id="reply_register" class="reply"></span>
+                </div>
+            </form>
+            <div class="show-login hidden">
+                <a href="/login">Login</a>
+            </div>
+        </div>
+
+        <% include ../partials/footer %>
+
+
+        <script>
+
+            $(document).ready(function() {
+
+                $("#form-register").validate({
+                    rules: {
+                        email: {
+                            required: true,
+                            email: true
+                        },
+                        password: {
+                            required: true,
+                            password_complex: true
+                        },
+                        password_confirm: {
+                            equalTo: "#password"
+                        },
+                        agree: {
+                            required: true
+                        }
+                    },
+                    messages: {
+                        email: {
+                            required: "* Check email"
+                        },
+                        password: {
+                            required: "* 8+ characters and a combination of upper / lower / numbers / special",
+                            password_comple: true
+                        },
+                        password_confirm: {
+                            equalTo: "*"
+                        },
+                        agree: {
+                            required: "* Confirm registration"
+                        }
+                    }
+                });
+
+                jQuery.validator.addMethod("password_complex", function(value, element) {
+                        return this.optional(element) || isValidPassword(value);
+                    }, "*"
+                );
+
+                var btnAjaxSave = document.querySelector("#btnRegister");
+                btnAjaxSave.addEventListener("click", function(event) {
+                    event.preventDefault();
+
+                    if ($("#form-register").valid()) {
+                        var email = $("#email").val();
+                        var password = $("#password").val();
+                        var _csrf = $("[name='_csrf']").val();
+                        var form = $("#form-register");
+
+                        $.ajax({
+                            type: "POST",
+                            url: "/register/ajax/",
+                            data: {
+                                action: "ajax_save", email: email, password: password, _csrf: _csrf
+                            },
+                            success: function (data) {
+                                var obj = JSON.parse(data);
+                                if (obj.success) {
+                                    form.find("input, select, textarea, button, label").hide();
+                                    $("#reply_register").html("You have successfully registered an account");
+                                    $("#reply_register").addClass("success");
+                                    $(".show-login").show();
+                                    //window.location.reload();
+                                } else {
+                                    $("#reply_register").text("User account already registered");
+                                    $("#reply_register").addClass("error");
+                                }
+                            }
+                        });
+
+                    }
+
+                });
+            });
+
+        </script>
+
+    </body>
+
+</html>

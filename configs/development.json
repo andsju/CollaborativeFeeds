@@ -1,0 +1,16 @@
+{
+    "session": {
+
+        "sessionName": "ExpressServerSession",
+        "sessionSecret": "NHR96SK3QCP35UGUNCLY4YQR"
+
+    },
+    "mysql": {
+        "connectionLimit": "10",
+        "host": "localhost",
+        "user": "root",
+        "password": "",
+        "database": "db_feeds"
+    }
+}
+

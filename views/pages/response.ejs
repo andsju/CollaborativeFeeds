@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Response</title>
+</head>
+
+<body>
+
+<% include ../partials/navigation %>
+<% include ../partials/site %>
+<%- include('../partials/online', {user: user}) %>
+
+<h1>Response</h1>
+
+
+
+<ul class="users">
+
+    <% if (rows.length > 0) { %>
+
+
+    <% rows.forEach(function(row) { %>
+
+    <li><%= row.response %></li>
+
+    <% }) %>
+
+
+    <% } %>
+
+
+</ul>
+
+
+
+</body>
+
+</html>

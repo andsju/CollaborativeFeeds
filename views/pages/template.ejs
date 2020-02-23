@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Test</title>
+</head>
+
+<body>
+
+<% include ../partials/navigation %>
+<%- include('../partials/online', {user: user}) %>
+
+<div>
+    <form class="container form-template" action="/template?form=form-template" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" />
+        </div>
+        <label for="comment">Comment</label>
+        <textarea name="comment" id="comment"></textarea>
+        <div class="form-group">
+            <label for="choose">Select</label>
+            <select name="choose">
+                <option value=""></option>
+                <option value="A">A</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="some">Some</label>
+            <input type="radio" name="some" id="some" value="1" />
+        </div>
+        <div class="form-group">
+            <label for="agree">Agree</label>
+            <input type="checkbox" name="agree" id="agree" value="1" />
+        </div>
+        <div class="form-group">
+            <button  name="btnClick" id="btnClick">Do</button>
+            <span class="form-reply"></span>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function() {
+
+        $(".form-template").on("submit", function(event) {
+        //$("#btnClick").click(function(event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            var action = $(this).attr("action");
+            var form = $(this).closest(".form-template");
+            $.ajax({
+                url: action,
+                type: "POST",
+                data: $(this).serialize(),
+                success: function(data) {
+                    if(data.success){
+                        //form.html("ok");
+
+                        form.find(".form-reply").html("ok").addClass("success");
+                        //form.find("input, select, textarea, button").attr("disabled", "disabled");
+                        form.find("input, select, textarea, button, label").hide();
+
+                    } else {
+                        console.log("n");
+                        container.html("<h3>Sry...</h3>");
+                    }
+                },
+                error: function() {
+                    console.log("...");
+                    container.html("<h3>Some problem</h3>");
+                }
+            });
+        });
+    });
+
+</script>
+
+<% include ../partials/footer %>
+
+
+</body>
+
+</html>

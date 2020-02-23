@@ -1,0 +1,115 @@
+body {
+    min-width: 320px;
+    max-width: 1280px;
+    margin: 50px auto;
+    font-family: 'Open Sans';
+    padding:10px;
+    font-size:1.0em;
+}
+
+/* overall div box-sizing
+------------------------- */
+div { box-sizing:border-box; -moz-box-sizing:border-box; }
+
+
+/* avoid flickers (body centered) when scrollbar appears in FF and Safari
+------------------------- */
+html { overflow-y:scroll; }
+
+
+div.wrapper { width: 100%;}
+div.wrapper:after { content: ""; display:table; clear:both;}
+
+ul#menu {list-style: none;margin: 0; padding: 0;}
+ul#menu li {float:left; margin-right:20px;}
+
+.qaz { background: #ccc; padding:2px; }
+
+div.meta {margin:5px 0; color:rgb(126,126,126);}
+div.post {clear:both;}
+
+
+div.form { padding:10px; }
+div.online { position:absolute; top: 0; left: 0; background: #000; color: #fff; width:100%; padding:10px;}
+.left {float: left; }
+.right {float: right; }
+a.online { color: #fff;text-decoration: none; }
+input, button, select, textarea {padding:5px;}
+input.size50 {width: 50%;}
+input.size75 {width: 75%;}
+input.size100 {width: 100%;}
+textarea { width: 95%; min-height: 100px;}
+.true { color: green; }
+.false { color: red; }
+.flash { background-image: url('../image/web-icons.png'); width:24px; height:24px; }
+/* positioning */
+.icon-arrow {background-position: 0px 0px;}
+.icon-check {background-position: -28px 0;}
+.icon-fail {background-position: -60px 0;}
+.icon-question {background-position: -92px 0;}
+.icon-exclamation {background-position: -130px 0;}
+
+.success { color: green; padding:4px;}
+.error { color: red; }
+.success a, .error a {color: #fff; }
+label.error {padding:4px;}
+.rss {}
+.words { border-bottom: 1px solid #000000;padding: 0 2px;}
+span.mark { border-bottom: 1px solid #000000; background:#abef98}
+.hidden {display:none;}
+
+.show-login {margin: 10px 0;}
+
+.form-group {margin:5px 0;}
+.reply {margin: 10px 0;}
+
+div.announce {position:absolute; top: 60px; left: 60px; text-align: center; border-radius: 50%; background: green; color: white; width:100px; height: 100px;
+    line-height: 100px;
+    background: -webkit-linear-gradient(0deg, orange, yellow); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(0deg, orange, yellow); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(0deg, orange, yellow); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(0deg, orange, yellow); /* Standard syntax (must be last) */
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border:1px solid grey;
+}
+
+div.instruction {padding: 10px; margin:10px; background: ivory; border: 1px dotted grey;}
+span.format {background: yellow; padding:10px;}
+span.channel { background: rgb(248,248,248); padding:5px; }
+div.space {margin-right:50px;}
+ul.users {list-style:none; margin:0 20px;padding:0;}
+ul.users li {margin:5px; padding:5px;border-bottom:1px solid grey;}
+ul.users li:hover {background: rgb(248,248,248);}
+span.disabled {color: grey;}
+
+
+#site { width:100%;box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);}
+#site-footer { width:100%;box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);margin-top:50px;}
+#site-links { list-style: none;margin:0; padding:0; }
+#site-links li {float:left;margin-right:2px;  background: rgb(248,248,248);border:1px solid grey; padding:5px 10px;}
+#site-links li:hover {background: rgb(255,255,255);}
+#site-links li a {text-decoration: none;}
+
+input.user-input {width:100%; max-width:250px;}
+h2.lead { margin:20px 0 -20px 0; font-size:1.1em; color: grey; }
+a.info { text-decoration: none;}
+
+div#history {background: rgb(252,252,252);padding:10px; border: 1px dotted grey; width:100%;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-top:50px;}
+
+div.feeds {margin:20px 0; background: ivory; padding:10px;border:1px dotted grey;}
+h4.feed-title {margin:0;}
+div.feeds a {text-decoration: none;}
+
+.post img {max-width:100%;}
+
+#collaboration-container, #search-container {padding:20px;}
+div.instruction {
+    background: -webkit-linear-gradient(0deg, rgb(104,104,104), rgb(128,128,128)); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(0deg, rgb(104,104,104), rgb(128,128,128)); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(0deg, rgb(104,104,104), rgb(128,128,128)); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(0deg, rgb(104,104,104), rgb(128,128,128)); /* Standard syntax (must be last) */
+    color: #fff;
+}
+
+div#timer {padding:10px;}

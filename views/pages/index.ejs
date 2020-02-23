@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/head %>
+    <title>Collaborative feeds</title>
+</head>
+
+<body>
+
+    <% include ../partials/navigation %>
+    <% include ../partials/site %>
+    <%- include('../partials/online', {user: user}) %>
+
+    <h1>Collaborative RSS feeds</h1>
+
+    <% if (user) { %>
+        <% if (feedView.length > 0) { %>
+            My views
+        <% }%>
+
+        <ul id="user-feed-view">
+            <% for (var i= 0; i < feedView.length; i += 1) { %>
+            <li id="<%= feedView[i].feed_view_id; %>"><a href="/view/show/<%= feedView[i].feed_view_id; %>"><%= feedView[i].title; %></a></li>
+            <% }%>
+        </ul>
+    <% }%>
+
+    <div id="message"></div>
+
+    <% include ../partials/footer %>
+
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    <script>
+
+        $(document).ready(function() {
+
+            var socket = io();
+
+            <% if (user) { %>
+
+                socket.on("login", function (data) {
+                    console.log(data);
+                    $("#message").append(data.message);
+                });
+
+                socket.on("channel", function (data) {
+                    $("#message").append(data.message);
+                    var $div = $("<div>", {id: data.channel, class: "announce"});
+                    $div.click(function(){
+                        location.href = "/collaborate/channel/" + this.id;
+                    });
+                    $("body").append($div);
+                    $div.text(data.message);
+                });
+
+            <% } %>
+
+        });
+
+    </script>
+
+</body>
+
+</html>

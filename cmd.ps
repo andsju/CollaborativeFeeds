@@ -1,3 +1,32 @@
+Öppna mappen med ditt projekt i Visual Studio code
+
+Öppna ett terminal fönster
+
+git init
+
 PS C:\webapps\MyProject> git init
 Initialized empty Git repository in C:/webapps/MyProject/.git/
-PS C:\webapps\MyProject>
+
+// Skapa en fil med namnet README.md
+
+git add README.md
+
+PS C:\webapps\MyProject>git add README.md
+
+// Ge en kommentar till din första comit
+git commit -m "first commit"
+
+// ange sökvägen till ditt repo i Github
+git remote add origin https://github.com/andsju/CollaborativeFeeds.git
+
+// pusha README filen till Guthub
+git push -u origin master
+
+// Lägg till befintliga filer 
+git add .
+
+// ge kommentar
+git commit -m "Files and folders"
+
+// pusha till Github
+git push origin master

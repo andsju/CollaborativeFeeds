@@ -1,21 +1,17 @@
 {
-  "name": "1dv430",
+  "name": "collaborativefeeds",
   "version": "1.0.0",
-  "description": "Collect these feeds",
+  "description": "CollaborativeFeeds is a socket solution to collaborate around RSS feeds",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/1dv430/as224cr-project.git"
+    "url": "git+https://github.com/andsju/CollaborativeFeeds"
   },
   "author": "andsju",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/1dv430/as224cr-project/issues"
-  },
-  "homepage": "https://github.com/1dv430/as224cr-project#readme",
+  "homepage": "https://github.com/andsju/CollaborativeFeeds#readme",
   "dependencies": {
     "body-parser": "^1.15.0",
     "connect-redis": "^3.0.2",
